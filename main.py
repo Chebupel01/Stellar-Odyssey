@@ -6,7 +6,7 @@ WHITE = (255, 255, 255)
 clock = pygame.time.Clock()
 
 
-class Enemy(object):
+class Enemy():
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -14,62 +14,76 @@ class Enemy(object):
         self.start = x
         self.end = SCREEN_WIDTH - 200
         self.last_shoot_time = pygame.time.get_ticks()
-        self.left_image_index = 0
-        self.right_image_index = 0
-        self.left_attack = [pygame.image.load('data/snowman/атака1.png'),
-                            pygame.image.load('data/snowman/атака2.png'),
-                            pygame.image.load('data/snowman/атака3.png'),
-                            pygame.image.load('data/snowman/атака4.png'),
-                            pygame.image.load('data/snowman/атака5.png'),
-                            pygame.image.load('data/snowman/атака6.png'),
-                            pygame.image.load('data/snowman/атака7.png'),
-                            pygame.image.load('data/snowman/атака8.png'),
-                            pygame.image.load('data/snowman/атака9.png'),
-                            pygame.image.load('data/snowman/атака10.png')]
-        self.right_attack = [pygame.image.load('data/snowman/атакаслева1.png'),
-                             pygame.image.load('data/snowman/атакасл2.png'),
-                             pygame.image.load('data/snowman/атакасл3.png'),
-                             pygame.image.load('data/snowman/атакасл4.png'),
-                             pygame.image.load('data/snowman/атакасл5.png'),
-                             pygame.image.load('data/snowman/атакасл6.png'),
-                             pygame.image.load('data/snowman/атакасл7.png'),
-                             pygame.image.load('data/snowman/атакасл8.png'),
-                             pygame.image.load('data/snowman/атакасл9.png'),
-                             pygame.image.load('data/snowman/атакасл10.png')]
-        self.enemy_images = self.left_attack
+        self.left_attack = [
+            pygame.image.load('data/snowman/снеговик.png'),
+            pygame.image.load('data/snowman/атакаслева1.png'),
+            pygame.image.load('data/snowman/атакасл2.png'),
+            pygame.image.load('data/snowman/атакасл3.png'),
+            pygame.image.load('data/snowman/атакасл4.png'),
+            pygame.image.load('data/snowman/атакасл5.png'),
+            pygame.image.load('data/snowman/атакасл6.png'),
+            pygame.image.load('data/snowman/атакасл7.png'),
+            pygame.image.load('data/snowman/атакасл8.png'),
+            pygame.image.load('data/snowman/атакасл9.png'),
+            pygame.image.load('data/snowman/атакасл10.png')
+        ]
+        self.right_attack = [
+            pygame.image.load('data/snowman/снеговик2.png'),
+            pygame.image.load('data/snowman/атака1.png'),
+            pygame.image.load('data/snowman/атака2.png'),
+            pygame.image.load('data/snowman/атака3.png'),
+            pygame.image.load('data/snowman/атака4.png'),
+            pygame.image.load('data/snowman/атака5.png'),
+            pygame.image.load('data/snowman/атака6.png'),
+            pygame.image.load('data/snowman/атака7.png'),
+            pygame.image.load('data/snowman/атака8.png'),
+            pygame.image.load('data/snowman/атака9.png'),
+            pygame.image.load('data/snowman/атака10.png')
+        ]
+        self.enemy_image = self.right_attack[0]
+        self.attack_duration = 5000
+        self.attack_start_time = 0
+        self.is_attacking = False
+        self.attack_index = 0
 
     def move(self):
         current_time = pygame.time.get_ticks()
         time_since_last_shoot = current_time - self.last_shoot_time
-        if time_since_last_shoot >= 5000:
-            self.shoot()
-            self.last_shoot_time = current_time
-        if self.speed < 0:
-            if self.x > self.start - self.speed:
-                self.x += self.speed
-            else:
-                self.speed *= -1
-                self.x += self.speed
-            self.enemy_images = self.left_attack
-        else:
-            if self.x < self.end + self.speed:
-                self.x += self.speed
-            else:
-                self.speed *= -1
-                self.x += self.speed
-            self.enemy_images = self.right_attack
 
-    def shoot(self):
-        if self.speed < 0:
-            self.left_image_index = (self.left_image_index + 1) % len(self.left_attack)
-            self.enemy_images = self.left_attack
+        if time_since_last_shoot >= self.attack_duration and not self.is_attacking:
+            self.is_attacking = True
+            self.attack_start_time = current_time
+        if self.is_attacking:
+            time_since_attack_start = current_time - self.attack_start_time
+            if self.speed > 0:
+                self.enemy_image = self.right_attack[self.attack_index]
+                self.attack_index = (self.attack_index + 1) % len(self.right_attack)
+            else:
+                self.enemy_image = self.left_attack[self.attack_index]
+                self.attack_index = (self.attack_index + 1) % len(self.left_attack)
+
+            if time_since_attack_start >= self.attack_duration:
+                self.is_attacking = False
+                self.attack_index = 0
+                self.last_shoot_time = current_time
         else:
-            self.right_image_index = (self.right_image_index + 1) % len(self.right_attack)
-            self.enemy_images = self.right_attack
+            if self.speed < 0:
+                if self.x > self.start - self.speed:
+                    self.x += self.speed
+                else:
+                    self.speed *= -1
+                    self.x += self.speed
+                self.enemy_image = self.right_attack[0]
+            else:
+                if self.x < self.end + self.speed:
+                    self.x += self.speed
+                else:
+                    self.speed *= -1
+                    self.x += self.speed
+                self.enemy_image = self.left_attack[0]
 
     def get_current_image(self):
-        return pygame.transform.scale(
-            self.enemy_images[self.left_image_index if self.speed < 0 else self.right_image_index], (200, 200))
+        return pygame.transform.scale(self.enemy_image, (200, 200))
 
 
 pygame.init()
