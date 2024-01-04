@@ -44,6 +44,13 @@ class Enemy():
         self.is_attacking = False
         self.attack_index = 0
         self.animation_speed = 70
+        self.snowball_image = pygame.image.load('data/snowman/снег1.png')
+        self.snowball_x = 0
+        self.snowball_y = 0
+        self.snowball_speed = 8
+        self.show_snowball = False
+        self.snowball_direction = 1
+        self.throw_animation_done = False
 
     def move(self):
         current_time = pygame.time.get_ticks()
@@ -62,10 +69,21 @@ class Enemy():
                     self.attack_index = (self.attack_index + 1) % len(self.left_attack)
                 self.attack_start_time = current_time
 
-            if time_since_last_shoot >= self.attack_duration + (len(self.left_attack) * self.animation_speed):
+                if not self.throw_animation_done and time_since_last_shoot >= self.attack_duration + (
+                        len(self.left_attack) * self.animation_speed):
+                    self.show_snowball = True
+                    self.snowball_x = self.x
+                    self.snowball_y = self.y
+                    self.snowball_direction = 1 if self.speed > 0 else -1
+                    self.throw_animation_done = True
+
+            if time_since_last_shoot >= self.attack_duration + (
+                    len(self.left_attack) * self.animation_speed) + 2000:
                 self.is_attacking = False
                 self.attack_index = 0
                 self.last_shoot_time = current_time
+                self.throw_animation_done = False
+
         else:
             if self.speed < 0:
                 if self.x > self.start - self.speed:
@@ -100,6 +118,9 @@ while running:
     screen.blit(background_image, (0, 0))
     mucus.move()
     screen.blit(mucus.get_current_image(), (mucus.x, mucus.y))
+    if mucus.show_snowball:
+        mucus.snowball_x += mucus.snowball_speed * mucus.snowball_direction
+        screen.blit(mucus.snowball_image, (mucus.snowball_x, mucus.snowball_y))
     pygame.display.update()
     clock.tick(30)
 pygame.quit()
