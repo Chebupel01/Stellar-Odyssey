@@ -67,6 +67,9 @@ class Enemy():
         if time_since_last_shoot >= self.attack_duration and not self.is_attacking:
             self.is_attacking = True
             self.attack_start_time = current_time
+            pygame.mixer.music.load('data/music/s2.mp3')
+            pygame.mixer.music.set_volume(0.1)
+            pygame.mixer.music.play()
         if self.is_attacking:
             time_since_attack_start = current_time - self.attack_start_time
             if time_since_attack_start >= self.animation_speed:
