@@ -1,4 +1,5 @@
 import pygame
+import random
 
 SCREEN_WIDTH = 1800
 SCREEN_HEIGHT = 893
@@ -112,6 +113,12 @@ class Enemy():
         return pygame.transform.scale(self.enemy_image, (200, 200))
 
 
+snowsp = []
+for i in range(1200):
+    x = random.randrange(0, SCREEN_WIDTH)
+    y = random.randrange(0, SCREEN_HEIGHT)
+    snowsp.append([x, y])
+
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Stellar Odyssey")
@@ -130,6 +137,14 @@ while running:
     mucus2.move()
     screen.blit(mucus.get_current_image(), (mucus.x, mucus.y))
     screen.blit(mucus2.get_current_image(), (mucus2.x, mucus2.y))
+    for i in range(len(snowsp)):
+        pygame.draw.circle(screen, WHITE, snowsp[i], 2)
+        snowsp[i][1] += 1
+        if snowsp[i][1] > SCREEN_HEIGHT:
+            y = random.randrange(-50, -10)
+            snowsp[i][1] = y
+            x = random.randrange(0, SCREEN_WIDTH)
+            snowsp[i][0] = x
     for snow in snow_list:
         snow.move()
         screen.blit(snow.get_current_image(), (snow.x, snow.y))
