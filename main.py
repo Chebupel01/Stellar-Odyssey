@@ -61,7 +61,6 @@ def print_text(message, x, y, font_color=(0, 0, 0), font_type='PingPong.ttf', fo
     font_type = pygame.font.Font(font_type, font_size)
     text = font_type.render(message, True, font_color)
     screen.blit(text, (x, y))
-show_menu()
 
 class Snow():
     def __init__(self, x, y, speed):
