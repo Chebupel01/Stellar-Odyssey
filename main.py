@@ -1,12 +1,35 @@
 import pygame
-import sys
-
 clock = pygame.time.Clock()
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 screen = pygame.display.set_mode((800, 600))
 pygame.init()
+pygame.font.init()
+
+
+def show_menu():
+    menu_bc = pygame.image.load('data/BG/меню.png')
+    start_btn = Button(288, 70)
+    quit_btn = Button(120, 70)
+    show = True
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        screen.blit(menu_bc, (0, 0))
+        start_btn.draw(270, 200, 'Start game', start_game(), 50)
+        quit_btn.draw(358, 300, 'quit', quit, 50)
+        pygame.display.update()
+        clock.tick(60)
+
+
+def start_game():
+    pass
+    # основной цикл игры
+
+
 class Button:
     def __init__(self, width, height):
         self.width = width
@@ -29,3 +52,11 @@ class Button:
                     quit()
         else:
             pygame.draw.rect(screen, self.inactive_cir, (x, y, self.width, self.height))
+        print_text(message=message, x=x + 10, y=y + 10, font_size=font_size)
+
+
+def print_text(message, x, y, font_color=(0, 0, 0), font_type='PingPong.ttf', font_size=30):
+    font_type = pygame.font.Font(font_type, font_size)
+    text = font_type.render(message, True, font_color)
+    screen.blit(text, (x, y))
+show_menu()
