@@ -11,14 +11,33 @@ GAME_HEIGHT = 893
 WHITE = (255, 255, 255)
 clock = pygame.time.Clock()
 start_menu_screen = pygame.display.set_mode((START_MENU_WIDTH, START_MENU_HEIGHT))
+end_menu_screen = pygame.display.set_mode((START_MENU_WIDTH, START_MENU_HEIGHT))
 game_screen = None
 snow_list = []
+game_over = False
+
+
+def end_game():
+    end_bc = pygame.image.load('data/BG/gameover.jpg')
+    restart_btn = Button(190, 70, (190, 45, 48), (255, 0, 0), action=start_game)
+    menu_btn = Button(130, 70, (190, 45, 48), (255, 0, 0), action=show_menu)
+    show = True
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        end_menu_screen.blit(end_bc, (0, 0))
+        restart_btn.draw(310, 350, 'Restart', 50)
+        menu_btn.draw(342, 450, 'Menu', 50)
+        pygame.display.update()
+        clock.tick(60)
 
 
 def show_menu():
     menu_bc = pygame.image.load('data/BG/меню.png')
-    start_btn = Button(288, 70, start_game)
-    quit_btn = Button(120, 70, quit)
+    start_btn = Button(288, 70, (66, 170, 255), (0, 191, 255), action=start_game)
+    quit_btn = Button(120, 70, (66, 170, 255), (0, 191, 255), action=quit)
     show = True
     while show:
         for event in pygame.event.get():
@@ -79,11 +98,11 @@ def start_game():
 
 
 class Button:
-    def __init__(self, width, height, action=None):
+    def __init__(self, width, height, inactive_cir, active_cir, action=None):
         self.width = width
         self.height = height
-        self.inactive_cir = (66, 170, 255)
-        self.active_cir = (0, 191, 255)
+        self.inactive_cir = inactive_cir
+        self.active_cir = active_cir
         self.action = action
 
     def draw(self, x, y, message, font_size=30):
@@ -214,4 +233,4 @@ class Enemy:
         return pygame.transform.scale(self.enemy_image, (200, 200))
 
 
-show_menu()
+end_game()
