@@ -16,6 +16,9 @@ snow_list = []
 
 
 def show_menu():
+    pygame.mixer.music.load('fonmusic.mp3')
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play()
     menu_bc = pygame.image.load('data/BG/меню.png')
     start_btn = Button(288, 70, start_game)
     quit_btn = Button(120, 70, quit)
