@@ -11,48 +11,91 @@ GAME_HEIGHT = 893
 WHITE = (255, 255, 255)
 clock = pygame.time.Clock()
 start_menu_screen = pygame.display.set_mode((START_MENU_WIDTH, START_MENU_HEIGHT))
+end_menu_screen = pygame.display.set_mode((START_MENU_WIDTH, START_MENU_HEIGHT))
+
 game_screen = None
 snow_list = []
 
 
-def show_menu():
-    pygame.mixer.music.load('fonmusic.mp3')
-    pygame.mixer.music.set_volume(0.1)
-    pygame.mixer.music.play()
-    menu_bc = pygame.image.load('data/BG/меню.png')
-    start_btn = Button(288, 70, start_game)
-    quit_btn = Button(120, 70, quit)
+def end_game():
+    """
+    Функция для показа меню
+    """
+    # создание заднего фона
+    end_bc = pygame.image.load('data/BG/gameover.jpg')
+    # Создаем кнопку "restart_btn"
+    restart_btn = Button(190, 70, (190, 45, 48), (255, 0, 0), action=start_game)
+    # Создаем кнопку "menu_btn"
+    menu_btn = Button(130, 70, (190, 45, 48), (255, 0, 0), action=show_menu)
     show = True
+    # Запускаем цикл
     while show:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+        # Отображение заднего фона меню
+        end_menu_screen.blit(end_bc, (0, 0))
+        # Отображение кнопки "restart_btn"
+        restart_btn.draw(310, 350, 'Restart', 50)
+        # Отображение кнопки "menu_btn"
+        menu_btn.draw(342, 450, 'Menu', 50)
+        # Обновляем экрана
+        pygame.display.update()
+        clock.tick(60)
+
+
+def show_menu():
+    # создание заднего фона
+    menu_bc = pygame.image.load('data/BG/меню.png')
+    # Создаем кнопку "start_btn"
+    start_btn = Button(288, 70, (66, 170, 255), (0, 191, 255), action=start_game)
+    # Создаем кнопку "quit_btn"
+    quit_btn = Button(120, 70, (66, 170, 255), (0, 191, 255), action=quit)
+    show = True
+    # Запускаем цикл
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        # Отображение заднего фона меню
         start_menu_screen.blit(menu_bc, (0, 0))
+        # Отображение кнопки "start_btn"
         start_btn.draw(270, 200, 'Start game', 50)
+        # Отображение кнопки "quit_btn"
         quit_btn.draw(358, 300, 'quit', 50)
+        # Обновляем экрана
         pygame.display.update()
         clock.tick(60)
 
 
 def start_game():
+    """
+    функция для запуска основного цикла
+    """
+    # создание списка для хранения координат снежинок
     snowsp = []
     for i in range(1200):
         x = random.randrange(0, GAME_WIDTH)
         y = random.randrange(0, GAME_HEIGHT)
         snowsp.append([x, y])
-    """функция для запуска основного цикла"""
+    # объявление глобальных переменных
     global game_screen, snow_list
     os.environ['SDL_VIDEO_CENTERED'] = '1'
+    # создание экрана
     game_screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
     pygame.mixer.init()
     mucus = Enemy(0, 500)
     mucus2 = Enemy(400, 500)
+    # загрузка фона игры
     background_image = pygame.image.load("data/BG/BG.png").convert()
     snow_list = []
     running = True
+    # основной игровой цикл
     while running:
         for event in pygame.event.get():
+            # проверка на событие закрытия окна
             if event.type == pygame.QUIT:
                 running = False
         game_screen.fill(WHITE)
@@ -76,17 +119,19 @@ def start_game():
                 snow_list.remove(snow)
             elif snow.x < 0 or snow.x > GAME_WIDTH:
                 snow_list.remove(snow)
+        # обновление экрана
         pygame.display.update()
         clock.tick(30)
+    # завершение игры
     pygame.quit()
 
 
 class Button:
-    def __init__(self, width, height, action=None):
+    def __init__(self, width, height, inactive_cir, active_cir, action=None):
         self.width = width
         self.height = height
-        self.inactive_cir = (66, 170, 255)
-        self.active_cir = (0, 191, 255)
+        self.inactive_cir = inactive_cir
+        self.active_cir = active_cir
         self.action = action
 
     def draw(self, x, y, message, font_size=30):
@@ -112,23 +157,40 @@ def print_text(message, x, y, font_color=(0, 0, 0), font_type='PingPong.ttf', fo
 
 
 class Snow:
+    """
+    класс снега
+    """
     def __init__(self, x, y, speed):
+        """
+        Инициализия
+        """
         self.x = x
         self.y = y
+        # скорость движения снега
         self.speed = speed
         self.distance = 0
         self.snow_image = pygame.image.load('data/snowman/снег1.png')
 
     def move(self):
+        # Изменяем позицию снега
         self.x += self.speed
         self.distance += abs(self.speed)
 
     def get_current_image(self):
+        """
+        Возвращение изображение снежинки
+        """
         return pygame.transform.scale(self.snow_image, (80, 80))
 
 
 class Enemy:
+    """
+    класс снега
+    """
     def __init__(self, x, y):
+        """
+        Инициализация
+        """
         self.x = x
         self.y = y
         self.speed = 8
@@ -214,7 +276,10 @@ class Enemy:
                 self.enemy_image = pygame.image.load('data/snowman/снеговик.png')
 
     def get_current_image(self):
+        """
+        Возвращение изображение врага
+        """
         return pygame.transform.scale(self.enemy_image, (200, 200))
 
 
-show_menu()
+end_game()
