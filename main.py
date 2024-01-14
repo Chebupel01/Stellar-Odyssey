@@ -2,7 +2,6 @@ from random import randint, choice
 import pygame
 import sys
 
-
 SCREEN_WIDTH = 1800
 SCREEN_HEIGHT = 893
 WHITE = (255, 255, 255)
@@ -19,17 +18,17 @@ def load_level(level_name):
                     all_sprites.add(Tile(128 * count1, 128 * count, path))
                 elif '10.png' in path:
                     all_sprites.add(Tile(128 * count1, 128 * count, path))
-        '''with open(f'data/Levels/{level_name}Water.txt', 'r', encoding='UTF-8') as file1:
-            for line in file1:
-                water_map.append(line.split('|'))
-        return level, water_map'''
 
 
 class Tile(pygame.sprite.Sprite):
     def __init__(self, x, y, path):
         super().__init__()
         self.image = pygame.image.load(path)
-        self.rect = self.image.get_rect(center=(x + 64, y + 64))
+        if '14' in path or '15' in path or '16' in path:
+            self.rect = self.image.get_rect(center=(x + 64, y + 32))
+            self.rect.height = 64
+        else:
+            self.rect = self.image.get_rect(center=(x + 64, y + 64))
 
 
 class Player(pygame.sprite.Sprite):
@@ -41,20 +40,46 @@ class Player(pygame.sprite.Sprite):
         self.displacement_on_display = 64
         self.player = pygame.image.load(f'hero/11.png').convert_alpha()
         self.rect = self.player.get_rect(midbottom=(int(self.displacement_on_display + self.player.get_height() / 2),
-                                                    int(self.ydisplacement + self.player.get_height())))
+                                                    int((self.ydisplacement + self.player.get_height() * 0.6))))
         self.direction = 'Right'
         self.now_direction = 'Right'
         self.jumping = False
         self.running = False
+        self.attacking = False
         self.jump_time = 1
         self.run_time = 0
+        self.attacking_time = 1
         self.running_animation = ['81.png', '82.png', '83.png', '84.png', '85.png', '86.png', '87.png', '88.png',
                                   '89.png', '810.png', '811.png', '812.png', '813.png', '814.png', '815.png']
         self.jumping_animation = ['21.png', '22.png', '23.png', '24.png', '25.png', '26.png']
+        self.attack_animation = ['31.png', '32.png', '33.png', '34.png', '35.png', '36.png', '37.png']
 
     def render(self, screen):
         self.now_direction = 'Right'
-        if self.jumping:
+        if self.attacking:
+            if self.attacking_time <= 4:
+                image_name = self.attack_animation[self.attacking // 4]
+            elif self.attacking_time <= 8:
+                image_name = self.attack_animation[self.attacking // 4]
+            elif self.attacking_time <= 12:
+                image_name = self.attack_animation[self.attacking // 4]
+            elif self.attacking_time <= 16:
+                image_name = self.attack_animation[self.attacking // 4]
+            elif self.attacking_time <= 20:
+                image_name = self.attack_animation[self.attacking // 4]
+            elif self.attacking_time <= 24:
+                image_name = self.attack_animation[self.attacking // 4]
+            elif self.attacking_time <= 28:
+                image_name = self.attack_animation[self.attacking // 4]
+                self.attacking_time = 1
+                self.attacking = False
+            if self.direction != self.now_direction:
+                self.player = pygame.transform.flip(pygame.image.load(f'hero/{image_name}').convert_alpha(), True,
+                                                    False)
+            else:
+                self.player = pygame.image.load(f'hero/{image_name}').convert_alpha()
+            self.attacking_time += 1
+        elif self.jumping:
             if self.jump_time <= 5:
                 image_name = self.jumping_animation[0]
             elif self.jump_time <= 10:
@@ -68,7 +93,8 @@ class Player(pygame.sprite.Sprite):
             elif self.jump_time <= 200:
                 image_name = self.jumping_animation[5]
             if self.direction != self.now_direction:
-                self.player = pygame.transform.flip(pygame.image.load(f'hero/{image_name}').convert_alpha(), True, False)
+                self.player = pygame.transform.flip(pygame.image.load(f'hero/{image_name}').convert_alpha(), True,
+                                                    False)
             else:
                 self.player = pygame.image.load(f'hero/{image_name}').convert_alpha()
         elif self.run_time % 5 == 0 and self.running:
@@ -86,16 +112,17 @@ class Player(pygame.sprite.Sprite):
                 self.player = pygame.transform.flip(pygame.image.load(f'hero/11.png').convert_alpha(), True, False)
             else:
                 self.player = pygame.image.load(f'hero/11.png').convert_alpha()
-
+        resized_image = pygame.transform.scale(self.player,
+                                               (int(player.rect.width * 0.6), int(player.rect.height * 0.6)))
         if 896 <= self.displacement <= 7168:
             self.displacement_on_display = 896
-            screen.blit(self.player, (self.displacement_on_display, self.ydisplacement))
+            screen.blit(resized_image, (self.displacement_on_display, self.ydisplacement))
         elif 896 > self.displacement:
             self.displacement_on_display = self.displacement
-            screen.blit(self.player, (self.displacement_on_display, self.ydisplacement))
+            screen.blit(resized_image, (self.displacement_on_display, self.ydisplacement))
         else:
             self.displacement_on_display = 896 - self.displacement + 7168
-            screen.blit(self.player, (self.displacement_on_display, self.ydisplacement))
+            screen.blit(resized_image, (self.displacement_on_display, self.ydisplacement))
         self.running = False
         return screen
 
@@ -135,15 +162,14 @@ class Player(pygame.sprite.Sprite):
 
     def collidePlayer(self):
         self.rect = self.player.get_rect(midbottom=(int(self.displacement_on_display + self.player.get_height() / 2),
-                                                    int(self.ydisplacement + self.player.get_height())))
+                                                    int((self.ydisplacement + self.player.get_height() * 0.6))))
+        player.rect.width = int(self.player.get_width() * 0.75)
         if not pygame.sprite.spritecollide(player, all_sprites, False) and not self.jumping and self.jump_time <= 20:
             self.jumping = True
             self.jump_time = 21
-        if pygame.sprite.spritecollide(player, all_sprites, False):
-            print('Нет коллизии')
-            for tile in all_sprites:
-                collision_rect = player.rect.clip(tile.rect)
-            print(f"Коллизия произошла в области: {collision_rect}")
+
+    def attack(self):
+        self.attacking = True
 
 
 class SnowParticles:
@@ -169,7 +195,6 @@ class SnowParticles:
         return screen
 
 
-
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Stellar Odyssey")
 pygame.init()
@@ -183,6 +208,8 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            player.attack()
     screen.fill(WHITE)
     player.move()
     collided_sprites = pygame.sprite.spritecollide(player, all_sprites, False)
