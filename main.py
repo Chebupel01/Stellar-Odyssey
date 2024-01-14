@@ -91,8 +91,8 @@ def start_game():
     # создание экрана
     game_screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
     pygame.mixer.init()
-    mucus = Enemy(0, 500)
-    mucus2 = Enemy(400, 500)
+    mucus = Enemy(0, 500, 0, 1000)
+    mucus2 = Enemy(400, 500, 0, 1000)
     # загрузка фона игры
     background_image = pygame.image.load("data/BG/BG.png").convert()
     snow_list = []
@@ -165,6 +165,7 @@ class Snow:
     """
     класс снега
     """
+
     def __init__(self, x, y, speed):
         """
         Инициализия
@@ -192,15 +193,16 @@ class Enemy:
     """
     класс снега
     """
-    def __init__(self, x, y):
+
+    def __init__(self, x, y, start, end):
         """
         Инициализация
         """
         self.x = x
         self.y = y
         self.speed = 8
-        self.start = x
-        self.end = GAME_WIDTH - 200
+        self.start = start
+        self.end = end
         self.last_shoot_time = pygame.time.get_ticks()
         self.left_attack = [
             pygame.image.load('data/snowman/атакаслева1.png'),
