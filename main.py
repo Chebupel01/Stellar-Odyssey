@@ -9,6 +9,7 @@ START_MENU_HEIGHT = 600
 GAME_WIDTH = 1800
 GAME_HEIGHT = 893
 WHITE = (255, 255, 255)
+pygame.display.set_caption('Stellar Odyssey')
 clock = pygame.time.Clock()
 start_menu_screen = pygame.display.set_mode((START_MENU_WIDTH, START_MENU_HEIGHT))
 end_menu_screen = pygame.display.set_mode((START_MENU_WIDTH, START_MENU_HEIGHT))
@@ -46,6 +47,10 @@ def end_game():
 
 
 def show_menu():
+    pygame.mixer.music.load('fonmusic.mp3')
+    pygame.mixer.music.play(loops=-1)
+    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.play()
     # создание заднего фона
     menu_bc = pygame.image.load('data/BG/меню.png')
     # Создаем кнопку "start_btn"
@@ -282,4 +287,4 @@ class Enemy:
         return pygame.transform.scale(self.enemy_image, (200, 200))
 
 
-end_game()
+show_menu()
