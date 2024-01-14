@@ -19,6 +19,9 @@ snow_list = []
 
 
 def end_game():
+    pygame.mixer.music.load('zvuki_game_over.mp3')
+    pygame.mixer.music.set_volume(0.4)
+    pygame.mixer.music.play()
     """
     Функция для показа меню
     """
@@ -289,4 +292,4 @@ class Enemy:
         return pygame.transform.scale(self.enemy_image, (200, 200))
 
 
-show_menu()
+end_game()
