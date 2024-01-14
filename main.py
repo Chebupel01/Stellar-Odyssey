@@ -6,22 +6,26 @@ import warnings
 SCREEN_WIDTH = 1800
 SCREEN_HEIGHT = 893
 WHITE = (255, 255, 255)
+all_sprites = pygame.sprite.Group()
 
 
 def load_level(level_name):
     level, water_map = [], []
     with open(f'data/Levels/{level_name}.txt', 'r', encoding='UTF-8') as file:
-        for line in file:
-            level.append(line.split('|'))
-        with open(f'data/Levels/{level_name}Water.txt', 'r', encoding='UTF-8') as file1:
+        for count, line in enumerate(file):
+            for count1, i in enumerate(line.split('|')):
+                path = f'data/{level_name}/Tiles/{i.strip()}.png'
+                if '0' not in path:
+                    all_sprites.add(Tile(128 * count1, 128 * count, path))
+        '''with open(f'data/Levels/{level_name}Water.txt', 'r', encoding='UTF-8') as file1:
             for line in file1:
                 water_map.append(line.split('|'))
-        return level, water_map
+        return level, water_map'''
 
 
 def render_level(level, water_map, level_name, screen):
     minim, maxim = (0, 15) if player.xtile < 8 else ((45, 61)
-                        if 53 < player.xtile else (player.xtile - 8, player.xtile + 8))
+                                                     if 53 < player.xtile else (player.xtile - 8, player.xtile + 8))
     for count, i in enumerate(water_map):
         for count1, j in enumerate(i[minim:maxim]):
             if count < 5:
@@ -52,43 +56,71 @@ def render_level(level, water_map, level_name, screen):
     return screen
 
 
+class Tile(pygame.sprite.Sprite):
+    def __init__(self, x, y, path):
+        super().__init__()
+        self.image = pygame.image.load(path)
+        self.rect = self.image.get_rect(center=(x + 64, y + 64))
+
+
 class Player(pygame.sprite.Sprite):
-    def __init__(self, level):
+    def __init__(self):
         super().__init__()
         self.xtile, self.ytile = 2, 2
         self.displacement = 64
+        self.ydisplacement = 64
         self.player = pygame.image.load(f'data/FrozenValleys/snowman/снеговик.png').convert_alpha()
+        self.rect = self.player.get_rect(midbottom=(int(self.displacement + 165 / 2), int(self.ydisplacement + 156)))
         self.direction = 'Right'
         self.now_direction = 'Right'
-        self.level = level
+        self.jumping = False
+        self.jump_time = 1
 
     def render(self, screen):
-        self.player = self.player.get_rect(bottom=(100, 300))
         if self.direction != self.now_direction:
             self.player = pygame.transform.flip(self.player, True, False)
             self.now_direction = self.direction
-        if self.displacement >= 64 and self.xtile == 7:
-            screen.blit(self.player, (7 * 128 + self.displacement, self.ytile * 128))
-            print((7, self.displacement))
-        elif self.displacement >= 64 and self.xtile == 53:
-            screen.blit(self.player, (7 * 128 + self.displacement, self.ytile * 128))
-        elif self.xtile < 8:
-            screen.blit(self.player, (self.xtile * 128 + self.displacement, self.ytile * 128))
-        elif 53 < self.xtile:
-            screen.blit(self.player, ((self.xtile - 45) * 128 + self.displacement, self.ytile * 128))
+        if 896 <= self.displacement <= 7168:
+            screen.blit(self.player, (896, self.ydisplacement))
         else:
-            screen.blit(self.player, (7 * 128 + 64, self.ytile * 128))
+            screen.blit(self.player, (self.displacement, self.ydisplacement))
         return screen
 
-    def move(self, command):
-        if command == 'A':
-            self.displacement -= 16
+    def move(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a]:
+            self.displacement -= 8
             self.direction = 'Left'
-        if command == 'D':
-            self.displacement += 16
+            for tile in all_sprites:
+                if 896 <= self.displacement <= 7168:
+                    tile.rect.x += 8
+        if keys[pygame.K_d]:
+            self.displacement += 8
             self.direction = 'Right'
-        self.displacement, self.xtile = (self.displacement + 128, self.xtile - 1) if self.displacement < 0\
-            else ((self.displacement - 128, self.xtile + 1) if self.displacement > 128 else (self.displacement, self.xtile))
+            for tile in all_sprites:
+                if 896 <= self.displacement <= 7168:
+                    tile.rect.x -= 8
+        if not self.jumping:
+            if keys[pygame.K_SPACE]:
+                self.jumping = True
+        else:
+            if self.jump_time <= 20:
+                self.ydisplacement -= 16
+            else:
+                self.ydisplacement += 16
+            if pygame.sprite.spritecollide(player, all_sprites, False) and self.jumping and self.jump_time > 20:
+                self.jump_time = 0
+                self.jumping = False
+            self.jump_time += 1
+
+    def collidePlayer(self):
+        self.rect = self.player.get_rect(midbottom=(int(self.displacement + 165 / 2), int(self.ydisplacement + 156)))
+        if not pygame.sprite.spritecollide(player, all_sprites, False) and not self.jumping and self.jump_time <= 20:
+            self.jumping = True
+            self.jump_time = 21
+            print('Нет коллизии')
+
+
 
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -97,23 +129,21 @@ pygame.init()
 background_image = pygame.image.load("data/FrozenValleys/BG/BG.png").convert()
 running = True
 clock = pygame.time.Clock()
-level, water_map = load_level('FrozenValleys')
-player = Player(level)
+load_level('FrozenValleys')
+player = Player()
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_d]:
-            player.move('D')
-        if keys[pygame.K_a]:
-            player.move('A')
     screen.fill(WHITE)
+    player.move()
+    collided_sprites = pygame.sprite.spritecollide(player, all_sprites, False)
     screen.blit(background_image, (0, 0))
-    screen = render_level(level, water_map, 'FrozenValleys', screen)
+    all_sprites.draw(screen)
+    player.collidePlayer()
     screen = player.render(screen)
     pygame.display.update()
     pygame.display.flip()
-    clock.tick(300)
+    clock.tick(60)
 pygame.quit()
 sys.exit()
