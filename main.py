@@ -32,6 +32,7 @@ def load_level(level_name):
                     all_sprites.add(Tile(128 * count1, 128 * count, path))
     return all_sprites
 
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, x, y, path):
         super().__init__()
@@ -65,7 +66,7 @@ class Player(pygame.sprite.Sprite):
         self.jumping_animation = ['21.png', '22.png', '23.png', '24.png', '25.png', '26.png']
         self.attack_animation = ['31.png', '32.png', '33.png', '34.png', '35.png', '36.png', '37.png']
 
-    def render(self, screen):
+    def render(self, screen, snowmans):
         self.now_direction = 'Right'
         if self.attacking:
             if self.attacking_time <= 4:
@@ -80,10 +81,13 @@ class Player(pygame.sprite.Sprite):
                 image_name = self.attack_animation[self.attacking // 4]
             elif self.attacking_time <= 24:
                 image_name = self.attack_animation[self.attacking // 4]
-            elif self.attacking_time <= 28:
+            if self.attacking_time <= 28:
                 image_name = self.attack_animation[self.attacking // 4]
                 self.attacking_time = 1
                 self.attacking = False
+                for count, snowman in enumerate(snowmans):
+                    if pygame.sprite.collide_rect(player, snowman):
+                        snowmans.pop(count)
             if self.direction != self.now_direction:
                 self.player = pygame.transform.flip(pygame.image.load(f'hero/{image_name}').convert_alpha(), True,
                                                     False)
@@ -135,9 +139,9 @@ class Player(pygame.sprite.Sprite):
             self.displacement_on_display = 896 - self.displacement + 7168
             screen.blit(resized_image, (self.displacement_on_display, self.ydisplacement))
         self.running = False
-        return screen
+        return screen, snowmans
 
-    def move(self, all_sprites):
+    def move(self, all_sprites, snowmens):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
             self.displacement -= 8
@@ -145,6 +149,8 @@ class Player(pygame.sprite.Sprite):
             if 896 <= self.displacement <= 7168:
                 for tile in all_sprites:
                     tile.rect.x += 8
+                for snowman in snowmens:
+                    snowman.x += 8
             self.run_time += 1
             self.running = True
         if keys[pygame.K_d]:
@@ -153,6 +159,8 @@ class Player(pygame.sprite.Sprite):
             if 896 <= self.displacement <= 7168:
                 for tile in all_sprites:
                     tile.rect.x -= 8
+                for snowman in snowmens:
+                    snowman.x -= 8
             self.run_time += 1
             self.running = True
         if not keys:
@@ -184,17 +192,37 @@ class Player(pygame.sprite.Sprite):
     def attack(self):
         self.attacking = True
 
-    def game_over(self, running):
+    def game_over(self, running, game):
         status = ''
         if player.rect.y > 1000:
+
             running = False
             status = 'GAME OVER'
             self.displacement = 120
             self.ydisplacement = 220
             self.displacement_on_display = 64
             self.player = pygame.image.load(f'hero/11.png').convert_alpha()
-            self.rect = self.player.get_rect(midbottom=(int(self.displacement_on_display + self.player.get_height() / 2),
-                                                        int((self.ydisplacement + self.player.get_height() * 0.6))))
+            self.rect = self.player.get_rect(
+                midbottom=(int(self.displacement_on_display + self.player.get_height() / 2),
+                           int((self.ydisplacement + self.player.get_height() * 0.6))))
+            self.direction = 'Right'
+            self.now_direction = 'Right'
+            self.jumping = False
+            self.running = False
+            self.attacking = False
+            self.jump_time = 1
+            self.run_time = 0
+            self.attacking_time = 1
+        if game:
+            running = False
+            status = 'GAME OVER'
+            self.displacement = 120
+            self.ydisplacement = 220
+            self.displacement_on_display = 64
+            self.player = pygame.image.load(f'hero/11.png').convert_alpha()
+            self.rect = self.player.get_rect(
+                midbottom=(int(self.displacement_on_display + self.player.get_height() / 2),
+                           int((self.ydisplacement + self.player.get_height() * 0.6))))
             self.direction = 'Right'
             self.now_direction = 'Right'
             self.jumping = False
@@ -205,19 +233,42 @@ class Player(pygame.sprite.Sprite):
             self.attacking_time = 1
         return running, status
 
+    def win(self, running, game):
+        status = ''
+        if self.displacement > 7000:
+            running = False
+            status = 'WIN'
+            self.displacement = 120
+            self.ydisplacement = 220
+            self.displacement_on_display = 64
+            self.player = pygame.image.load(f'hero/11.png').convert_alpha()
+            self.rect = self.player.get_rect(
+                midbottom=(int(self.displacement_on_display + self.player.get_height() / 2),
+                           int((self.ydisplacement + self.player.get_height() * 0.6))))
+            self.direction = 'Right'
+            self.now_direction = 'Right'
+            self.jumping = False
+            self.running = False
+            self.attacking = False
+            self.jump_time = 1
+            self.run_time = 0
+            self.attacking_time = 1
+        return running, status
+
+
 class SnowParticles:
     def __init__(self):
         self.snowflakes = []
         for i in range(0, 1800, 2):
-            for j in range(randint(0, 10)):
-                self.snowflakes.append([i, randint(0, 1800)])
+            for j in range(random.randint(0, 10)):
+                self.snowflakes.append([i, random.randint(0, 1800)])
 
     def render(self, screen):
-        for i in range(randint(0, 10)):
-            self.snowflakes.append([randint(0, 1800), 0])
+        for i in range(random.randint(0, 10)):
+            self.snowflakes.append([random.randint(0, 1800), 0])
         for count, i in enumerate(self.snowflakes):
             pygame.draw.rect(screen, (255, 255, 255), (i[0], i[1], 4, 4))
-            if choice(['RIGHT', 'LEFT']) == 'RIGHT':
+            if random.choice(['RIGHT', 'LEFT']) == 'RIGHT':
                 self.snowflakes[count][0] += 4
             else:
                 self.snowflakes[count][0] -= 4
@@ -237,6 +288,8 @@ def win_game():
     pygame.mixer.music.play()
     # создание заднего фона
     end_bc = pygame.image.load('data/BG/win.png')
+    end_menu_screen = pygame.display.set_mode((START_MENU_WIDTH, START_MENU_HEIGHT))
+    pygame.display.set_caption("Stellar Odyssey")
     # Создаем кнопку "restart_btn"
     restart_btn = Button(190, 70, (68, 148, 74), (152, 251, 152), action=start_game)
     # Создаем кнопку "menu_btn"
@@ -294,6 +347,85 @@ def end_game():
         clock.tick(60)
 
 
+def level2():
+    pygame.mixer.music.load('fonmusic.mp3')
+    pygame.mixer.music.play(loops=-1)
+    pygame.mixer.music.set_volume(0.3)
+    pygame.mixer.music.play()
+    screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
+    global game_screen, snow_list
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
+    pygame.display.set_caption("Stellar Odyssey")
+    pygame.init()
+    background_image = pygame.image.load("data/BG/BG.png").convert()
+    running = True
+    clock = pygame.time.Clock()
+    all_sprites = load_level('FrozenValleys')
+    snowsp = []
+    mucus = Enemy(980, 500, 1, 16)
+    mucus2 = Enemy(1400, 100, -1, 16)
+    for i in range(1200):
+        x = random.randrange(0, GAME_WIDTH)
+        y = random.randrange(0, GAME_HEIGHT)
+        snowsp.append([x, y])
+    game_status1 = '0'
+    snowmans = [Enemy(980, 500, 1, 16), Enemy(1400, 100, -1, 16), Enemy(2500, 235, -1, 16),
+                Enemy(3500, 235, -1, 16), Enemy(5504, 500, -1, 16), Enemy(5504, 500, -1, 16), Enemy(384, -35, 1, 16),
+                Enemy(7100, 365, -1, 16)]
+    game_status = ''
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                player.attack()
+        screen.fill(WHITE)
+        all_sprites = player.move(all_sprites, snowmans)
+        screen.blit(background_image, (0, 0))
+        all_sprites.draw(screen)
+        all_sprites = player.collidePlayer(all_sprites)
+        screen, snowmans = player.render(screen, snowmans)
+        running, game_status = player.game_over(running, 0)
+        running, game_status = player.win(running, 0)
+        for i in snowmans:
+            i.move()
+            screen.blit(i.get_current_image(), (i.x, i.y))
+        for i in range(len(snowsp)):
+            pygame.draw.circle(screen, WHITE, snowsp[i], 2)
+            snowsp[i][1] += 1
+            if snowsp[i][1] > GAME_HEIGHT:
+                y = random.randrange(-50, -10)
+                snowsp[i][1] = y
+                x = random.randrange(0, GAME_WIDTH)
+                snowsp[i][0] = x
+        for snow in snow_list:
+            snow.move()
+            screen.blit(snow.get_current_image(), (snow.x, snow.y))
+            if pygame.sprite.collide_rect(player, snow):
+                running, game_status = player.game_over(running, 1)
+            if snow.distance >= 550:
+                snow_list.remove(snow)
+            elif snow.x < 0 or snow.x > GAME_WIDTH:
+                snow_list.remove(snow)
+        if game_status == 'WIN':
+            snowmans = [Enemy(980, 500, 1, 16), Enemy(1400, 100, -1, 16), Enemy(2500, 235, -1, 16),
+                        Enemy(3500, 235, -1, 16), Enemy(5504, 500, -1, 16), Enemy(5504, 500, -1, 16),
+                        Enemy(384, -35, 1, 16), Enemy(7100, 365, -1, 16)]
+            win_game()
+        if player.ydisplacement > 1000:
+            running, game_status = player.game_over(running, 1)
+        if game_status == 'GAME OVER':
+            snowmans = [Enemy(980, 500, 1, 16), Enemy(1400, 100, -1, 16), Enemy(2500, 235, -1, 16),
+                        Enemy(3500, 235, -1, 16), Enemy(5504, 500, -1, 16), Enemy(5504, 500, -1, 16),
+                        Enemy(384, -35, 1, 16), Enemy(7100, 365, -1, 16)]
+            end_game()
+        pygame.display.update()
+        pygame.display.flip()
+        clock.tick(60)
+    pygame.quit()
+    sys.exit()
+
+
 def show_menu():
     pygame.mixer.music.load('fonmusic.mp3')
     pygame.mixer.music.play(loops=-1)
@@ -302,9 +434,11 @@ def show_menu():
     # создание заднего фона
     menu_bc = pygame.image.load('data/BG/меню.png')
     # Создаем кнопку "start_btn"
-    start_btn = Button(288, 70, (66, 170, 255), (0, 191, 255), action=start_game)
+    start_btn = Button(175, 70, (66, 170, 255), (0, 191, 255), action=start_game)
     # Создаем кнопку "quit_btn"
     quit_btn = Button(120, 70, (66, 170, 255), (0, 191, 255), action=quit)
+    # Создаем кнопку "quit_btn"
+    lev_btn = Button(175, 70, (66, 170, 255), (0, 191, 255), action=level2)
     show = True
     # Запускаем цикл
     while show:
@@ -317,75 +451,38 @@ def show_menu():
         # Отображение названия игры в главном мееню
         print_text('STELLAR ODYSSEY', 185, 100, font_size=60)
         # Отображение кнопки "start_btn"
-        start_btn.draw(270, 200, 'Start game', 50)
+        start_btn.draw(330, 200, 'LEVEL 1', 50)
         # Отображение кнопки "quit_btn"
-        quit_btn.draw(358, 300, 'quit', 50)
+        quit_btn.draw(358, 400, 'quit', 50)
+        lev_btn.draw(330, 300, 'LEVEL 2', 50)
         # Обновляем экрана
         pygame.display.update()
         clock.tick(60)
 
 
 def start_game():
-    """
-    функция для запуска основного цикла
-    """
-    # создание списка для хранения координат снежинок
-    """snowsp = []
-    for i in range(1200):
-        x = random.randrange(0, GAME_WIDTH)
-        y = random.randrange(0, GAME_HEIGHT)
-        snowsp.append([x, y])
-    # объявление глобальных переменных
+    pygame.mixer.music.load('fonmusic.mp3')
+    pygame.mixer.music.play(loops=-1)
+    pygame.mixer.music.set_volume(0.3)
+    pygame.mixer.music.play()
+    screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
     global game_screen, snow_list
     os.environ['SDL_VIDEO_CENTERED'] = '1'
-    # создание экрана
-    game_screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
-    pygame.mixer.init()
-    mucus = Enemy(0, 500, 0, 1000)
-    mucus2 = Enemy(400, 500, 0, 1000)
-    # загрузка фона игры
-    background_image = pygame.image.load("data/BG/BG.png").convert()
-    snow_list = []
-    running = True
-    # основной игровой цикл
-    while running:
-        for event in pygame.event.get():
-            # проверка на событие закрытия окна
-            if event.type == pygame.QUIT:
-                running = False
-        game_screen.fill(WHITE)
-        game_screen.blit(background_image, (0, 0))
-        mucus.move()
-        mucus2.move()
-        game_screen.blit(mucus.get_current_image(), (mucus.x, mucus.y))
-        game_screen.blit(mucus2.get_current_image(), (mucus2.x, mucus2.y))
-        for i in range(len(snowsp)):
-            pygame.draw.circle(game_screen, WHITE, snowsp[i], 2)
-            snowsp[i][1] += 1
-            if snowsp[i][1] > GAME_HEIGHT:
-                y = random.randrange(-50, -10)
-                snowsp[i][1] = y
-                x = random.randrange(0, GAME_WIDTH)
-                snowsp[i][0] = x
-        for snow in snow_list:
-            snow.move()
-            game_screen.blit(snow.get_current_image(), (snow.x, snow.y))
-            if snow.distance >= 350:
-                snow_list.remove(snow)
-            elif snow.x < 0 or snow.x > GAME_WIDTH:
-                snow_list.remove(snow)
-        # обновление экрана
-        pygame.display.update()
-        clock.tick(30)
-    # завершение игры
-    pygame.quit()"""
-    screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
     pygame.display.set_caption("Stellar Odyssey")
     pygame.init()
     background_image = pygame.image.load("data/BG/BG.png").convert()
     running = True
     clock = pygame.time.Clock()
     all_sprites = load_level('FrozenValleys')
+    snowsp = []
+    mucus = Enemy(980, 500, 1, 10)
+    mucus2 = Enemy(1400, 100, -1, 10)
+    for i in range(1200):
+        x = random.randrange(0, GAME_WIDTH)
+        y = random.randrange(0, GAME_HEIGHT)
+        snowsp.append([x, y])
+    snowmans = [Enemy(980, 500, 1, 10), Enemy(1400, 100, -1, 10), Enemy(2500, 235, -1, 10),
+                Enemy(3500, 235, -1, 10), Enemy(5504, 500, -1, 10), Enemy(5504, 500, -1, 10)]
     game_status = ''
     while running:
         for event in pygame.event.get():
@@ -394,20 +491,49 @@ def start_game():
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 player.attack()
         screen.fill(WHITE)
-        all_sprites = player.move(all_sprites)
+        all_sprites = player.move(all_sprites, snowmans)
         screen.blit(background_image, (0, 0))
         all_sprites.draw(screen)
         all_sprites = player.collidePlayer(all_sprites)
-        screen = player.render(screen)
-        running, game_status = player.game_over(running)
+        screen, snowmans = player.render(screen, snowmans)
+        running, game_status = player.game_over(running, 0)
+        running, game_status = player.win(running, 0)
+        for i in snowmans:
+            i.move()
+            screen.blit(i.get_current_image(), (i.x, i.y))
+        for i in range(len(snowsp)):
+            pygame.draw.circle(screen, WHITE, snowsp[i], 2)
+            snowsp[i][1] += 1
+            if snowsp[i][1] > GAME_HEIGHT:
+                y = random.randrange(-50, -10)
+                snowsp[i][1] = y
+                x = random.randrange(0, GAME_WIDTH)
+                snowsp[i][0] = x
+        for snow in snow_list:
+            snow.move()
+            screen.blit(snow.get_current_image(), (snow.x, snow.y))
+            if pygame.sprite.collide_rect(player, snow):
+                running, game_status = player.game_over(running, 1)
+            if snow.distance >= 350:
+                snow_list.remove(snow)
+            elif snow.x < 0 or snow.x > GAME_WIDTH:
+                snow_list.remove(snow)
+        if game_status == 'WIN':
+            snowmans = [Enemy(980, 500, 1, 10), Enemy(1400, 100, -1, 10), Enemy(2500, 235, -1, 10),
+                        Enemy(3500, 235, -1, 10), Enemy(5504, 500, -1, 10), Enemy(5504, 500, -1, 10)]
+            win_game()
+        if player.ydisplacement > 1000:
+            running, game_status = player.game_over(running, 1)
         if game_status == 'GAME OVER':
-            print(111111111111111111)
+            snowmans = [Enemy(980, 500, 1, 10), Enemy(1400, 100, -1, 10), Enemy(2500, 235, -1, 10),
+                        Enemy(3500, 235, -1, 10), Enemy(5504, 500, -1, 10), Enemy(5504, 500, -1, 10)]
             end_game()
         pygame.display.update()
         pygame.display.flip()
         clock.tick(60)
     pygame.quit()
     sys.exit()
+
 
 class Button:
     def __init__(self, width, height, inactive_cir, active_cir, action=None):
@@ -444,27 +570,35 @@ class Snow(pygame.sprite.Sprite):
     класс снега
     """
 
-    def __init__(self, x, y, speed):
+    def __init__(self, x, y, napravlenie, speed):
         """
         Инициализия
         """
+        self.napravlenie = napravlenie
         self.x = x
         self.y = y
         # скорость движения снега
         self.speed = speed
         self.distance = 0
         self.snow_image = pygame.image.load('data/snowman/снег1.png')
+        self.rect = self.snow_image.get_rect()
 
     def move(self):
         # Изменяем позицию снега
-        self.x += self.speed
-        self.distance += abs(self.speed)
+        self.rect = self.snow_image.get_rect(midbottom=(int(self.x + self.snow_image.get_height() / 2),
+                                                        int((self.y + self.snow_image.get_height()))))
+        if self.napravlenie == 1:
+            self.x += self.speed
+            self.distance += abs(self.speed)
+        else:
+            self.x -= self.speed
+            self.distance += abs(self.speed)
 
     def get_current_image(self):
         """
         Возвращение изображение снежинки
         """
-        return pygame.transform.scale(self.snow_image, (80, 80))
+        return pygame.transform.scale(self.snow_image, (50, 50))
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -472,15 +606,15 @@ class Enemy(pygame.sprite.Sprite):
     класс снега
     """
 
-    def __init__(self, x, y, start, end):
+    def __init__(self, x, y, napravlenie, speed):
         """
         Инициализация
         """
+        super().__init__()
         self.x = x
         self.y = y
-        self.speed = 8
-        self.start = start
-        self.end = end
+        self.napravlenie = napravlenie
+        self.speed = speed
         self.last_shoot_time = pygame.time.get_ticks()
         self.left_attack = [
             pygame.image.load('data/snowman/атакаслева1.png'),
@@ -507,13 +641,16 @@ class Enemy(pygame.sprite.Sprite):
             pygame.image.load('data/snowman/атака10.png')
         ]
         self.enemy_image = pygame.image.load('data/snowman/снеговик.png')
-        self.attack_duration = 1000
+        self.attack_duration = 2500
         self.attack_start_time = 0
         self.is_attacking = False
         self.attack_index = 0
         self.animation_speed = 70
+        self.rect = self.enemy_image.get_rect()
 
     def move(self):
+        self.rect = self.enemy_image.get_rect(midbottom=(int(self.x + self.enemy_image.get_height() / 2),
+                                                         int((self.y + self.enemy_image.get_height()))))
         current_time = pygame.time.get_ticks()
         time_since_last_shoot = current_time - self.last_shoot_time
         if time_since_last_shoot >= self.attack_duration and not self.is_attacking:
@@ -525,7 +662,7 @@ class Enemy(pygame.sprite.Sprite):
         if self.is_attacking:
             time_since_attack_start = current_time - self.attack_start_time
             if time_since_attack_start >= self.animation_speed:
-                if self.speed > 0:
+                if self.napravlenie == 1:
                     self.enemy_image = self.right_attack[self.attack_index]
                     self.attack_index = (self.attack_index + 1) % len(self.right_attack)
                 else:
@@ -537,34 +674,24 @@ class Enemy(pygame.sprite.Sprite):
                 self.attack_index = 0
                 self.last_shoot_time = current_time
                 snow_speed = self.speed * 2
-                if self.speed < 0:
+                if self.napravlenie != 1:
                     snow_x = self.x - 80
                 else:
                     snow_x = self.x + 200
                 snow_y = self.y
-                snow = Snow(snow_x, snow_y, snow_speed)
+                snow = Snow(snow_x, snow_y, self.napravlenie, self.speed)
                 snow_list.append(snow)
         else:
-            if self.speed < 0:
-                if self.x > self.start - self.speed:
-                    self.x += self.speed
-                else:
-                    self.speed *= -1
-                    self.x += self.speed
+            if self.napravlenie != 1:
                 self.enemy_image = pygame.image.load('data/snowman/снеговик2.png')
             else:
-                if self.x < self.end + self.speed:
-                    self.x += self.speed
-                else:
-                    self.speed *= -1
-                    self.x += self.speed
                 self.enemy_image = pygame.image.load('data/snowman/снеговик.png')
 
     def get_current_image(self):
         """
         Возвращение изображение врага
         """
-        return pygame.transform.scale(self.enemy_image, (200, 200))
+        return pygame.transform.scale(self.enemy_image, (150, 150))
 
 
 player = Player()
