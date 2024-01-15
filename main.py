@@ -1,6 +1,7 @@
 import pygame
 import os
 import random
+import sys
 
 pygame.init()
 pygame.font.init()
@@ -17,11 +18,10 @@ win_menu_screen = pygame.display.set_mode((START_MENU_WIDTH, START_MENU_HEIGHT))
 
 game_screen = None
 snow_list = []
-all_sprites = pygame.sprite.Group()
 
 
 def load_level(level_name):
-    level, water_map = [], []
+    all_sprites = pygame.sprite.Group()
     with open(f'data/Levels/{level_name}.txt', 'r', encoding='UTF-8') as file:
         for count, line in enumerate(file):
             for count1, i in enumerate(line.split('|')):
@@ -30,7 +30,7 @@ def load_level(level_name):
                     all_sprites.add(Tile(128 * count1, 128 * count, path))
                 elif '10.png' in path:
                     all_sprites.add(Tile(128 * count1, 128 * count, path))
-
+    return all_sprites
 
 class Tile(pygame.sprite.Sprite):
     def __init__(self, x, y, path):
@@ -46,9 +46,8 @@ class Tile(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.xtile, self.ytile = 2, 2
-        self.displacement = 70
-        self.ydisplacement = 112
+        self.displacement = 120
+        self.ydisplacement = 220
         self.displacement_on_display = 64
         self.player = pygame.image.load(f'hero/11.png').convert_alpha()
         self.rect = self.player.get_rect(midbottom=(int(self.displacement_on_display + self.player.get_height() / 2),
@@ -138,7 +137,7 @@ class Player(pygame.sprite.Sprite):
         self.running = False
         return screen
 
-    def move(self):
+    def move(self, all_sprites):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
             self.displacement -= 8
@@ -171,18 +170,40 @@ class Player(pygame.sprite.Sprite):
                 self.jump_time = 0
                 self.jumping = False
             self.jump_time += 1
+        return all_sprites
 
-    def collidePlayer(self):
+    def collidePlayer(self, all_sprites):
         self.rect = self.player.get_rect(midbottom=(int(self.displacement_on_display + self.player.get_height() / 2),
                                                     int((self.ydisplacement + self.player.get_height() * 0.6))))
         player.rect.width = int(self.player.get_width() * 0.75)
         if not pygame.sprite.spritecollide(player, all_sprites, False) and not self.jumping and self.jump_time <= 20:
             self.jumping = True
             self.jump_time = 21
+        return all_sprites
 
     def attack(self):
         self.attacking = True
 
+    def game_over(self, running):
+        status = ''
+        if player.rect.y > 1000:
+            running = False
+            status = 'GAME OVER'
+            self.displacement = 120
+            self.ydisplacement = 220
+            self.displacement_on_display = 64
+            self.player = pygame.image.load(f'hero/11.png').convert_alpha()
+            self.rect = self.player.get_rect(midbottom=(int(self.displacement_on_display + self.player.get_height() / 2),
+                                                        int((self.ydisplacement + self.player.get_height() * 0.6))))
+            self.direction = 'Right'
+            self.now_direction = 'Right'
+            self.jumping = False
+            self.running = False
+            self.attacking = False
+            self.jump_time = 1
+            self.run_time = 0
+            self.attacking_time = 1
+        return running, status
 
 class SnowParticles:
     def __init__(self):
@@ -206,6 +227,7 @@ class SnowParticles:
 
         return screen
 
+
 def win_game():
     """
     Функция для показа выигрыша
@@ -214,7 +236,7 @@ def win_game():
     pygame.mixer.music.set_volume(0.4)
     pygame.mixer.music.play()
     # создание заднего фона
-    end_bc = pygame.image.load('data/BG/win.jpg')
+    end_bc = pygame.image.load('data/BG/win.png')
     # Создаем кнопку "restart_btn"
     restart_btn = Button(190, 70, (68, 148, 74), (152, 251, 152), action=start_game)
     # Создаем кнопку "menu_btn"
@@ -241,11 +263,15 @@ def end_game():
     """
     Функция для показа конца игры
     """
+    pygame.init()
+    pygame.mixer.init()
     pygame.mixer.music.load('zvuki_game_over.mp3')
     pygame.mixer.music.set_volume(0.4)
     pygame.mixer.music.play()
     # создание заднего фона
-    end_bc = pygame.image.load('data/BG/gameover.jpg')
+    end_bc = pygame.image.load('data/BG/gameover.png')
+    end_menu_screen = pygame.display.set_mode((START_MENU_WIDTH, START_MENU_HEIGHT))
+    pygame.display.set_caption("Stellar Odyssey")
     # Создаем кнопку "restart_btn"
     restart_btn = Button(190, 70, (190, 45, 48), (255, 0, 0), action=start_game)
     # Создаем кнопку "menu_btn"
@@ -288,6 +314,8 @@ def show_menu():
                 quit()
         # Отображение заднего фона меню
         start_menu_screen.blit(menu_bc, (0, 0))
+        # Отображение названия игры в главном мееню
+        print_text('STELLAR ODYSSEY', 185, 100, font_size=60)
         # Отображение кнопки "start_btn"
         start_btn.draw(270, 200, 'Start game', 50)
         # Отображение кнопки "quit_btn"
@@ -302,7 +330,7 @@ def start_game():
     функция для запуска основного цикла
     """
     # создание списка для хранения координат снежинок
-    snowsp = []
+    """snowsp = []
     for i in range(1200):
         x = random.randrange(0, GAME_WIDTH)
         y = random.randrange(0, GAME_HEIGHT)
@@ -350,8 +378,36 @@ def start_game():
         pygame.display.update()
         clock.tick(30)
     # завершение игры
+    pygame.quit()"""
+    screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
+    pygame.display.set_caption("Stellar Odyssey")
+    pygame.init()
+    background_image = pygame.image.load("data/BG/BG.png").convert()
+    running = True
+    clock = pygame.time.Clock()
+    all_sprites = load_level('FrozenValleys')
+    game_status = ''
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                player.attack()
+        screen.fill(WHITE)
+        all_sprites = player.move(all_sprites)
+        screen.blit(background_image, (0, 0))
+        all_sprites.draw(screen)
+        all_sprites = player.collidePlayer(all_sprites)
+        screen = player.render(screen)
+        running, game_status = player.game_over(running)
+        if game_status == 'GAME OVER':
+            print(111111111111111111)
+            end_game()
+        pygame.display.update()
+        pygame.display.flip()
+        clock.tick(60)
     pygame.quit()
-
+    sys.exit()
 
 class Button:
     def __init__(self, width, height, inactive_cir, active_cir, action=None):
@@ -383,7 +439,7 @@ def print_text(message, x, y, font_color=(0, 0, 0), font_type='PingPong.ttf', fo
     start_menu_screen.blit(text, (x, y))
 
 
-class Snow:
+class Snow(pygame.sprite.Sprite):
     """
     класс снега
     """
@@ -411,7 +467,7 @@ class Snow:
         return pygame.transform.scale(self.snow_image, (80, 80))
 
 
-class Enemy:
+class Enemy(pygame.sprite.Sprite):
     """
     класс снега
     """
@@ -509,3 +565,7 @@ class Enemy:
         Возвращение изображение врага
         """
         return pygame.transform.scale(self.enemy_image, (200, 200))
+
+
+player = Player()
+show_menu()
