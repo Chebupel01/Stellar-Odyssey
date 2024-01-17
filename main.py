@@ -2,6 +2,7 @@ import pygame
 import os
 import random
 import sys
+import pygame.freetype
 
 pygame.init()
 pygame.font.init()
@@ -195,7 +196,6 @@ class Player(pygame.sprite.Sprite):
     def game_over(self, running, game):
         status = ''
         if player.rect.y > 1000:
-
             running = False
             status = 'GAME OVER'
             self.displacement = 120
@@ -279,7 +279,7 @@ class SnowParticles:
         return screen
 
 
-def win_game():
+def win_game(time):
     """
     Функция для показа выигрыша
     """
@@ -308,11 +308,12 @@ def win_game():
         # Отображение кнопки "menu_btn"
         menu_btn.draw(342, 450, 'Menu', 50)
         # Обновляем экрана
+        print_text(f'{time}', 0, 0, font_size=60)
         pygame.display.update()
         clock.tick(60)
 
 
-def end_game():
+def end_game(time):
     """
     Функция для показа конца игры
     """
@@ -343,6 +344,7 @@ def end_game():
         # Отображение кнопки "menu_btn"
         menu_btn.draw(342, 450, 'Menu', 50)
         # Обновляем экрана
+        print_text(f'{time}', 0, 0, font_size=60)
         pygame.display.update()
         clock.tick(60)
 
@@ -350,7 +352,7 @@ def end_game():
 def level2():
     pygame.mixer.music.load('fonmusic.mp3')
     pygame.mixer.music.play(loops=-1)
-    pygame.mixer.music.set_volume(0.3)
+    pygame.mixer.music.set_volume(0.2)
     pygame.mixer.music.play()
     screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
     global game_screen, snow_list
@@ -373,6 +375,7 @@ def level2():
                 Enemy(3500, 235, -1, 16), Enemy(5504, 500, -1, 16), Enemy(5504, 500, -1, 16), Enemy(384, -35, 1, 16),
                 Enemy(7100, 365, -1, 16)]
     game_status = ''
+    ticks = 0
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -387,6 +390,10 @@ def level2():
         screen, snowmans = player.render(screen, snowmans)
         running, game_status = player.game_over(running, 0)
         running, game_status = player.win(running, 0)
+        seconds = int(ticks / 1000 % 60)
+        minutes = int(ticks / 60000 % 24)
+        out = 'TIME {minutes:02d}:{seconds:02d}'.format(minutes=minutes, seconds=seconds)
+        print_text(f'{out}', 0, 0, font_size=50)
         for i in snowmans:
             i.move()
             screen.blit(i.get_current_image(), (i.x, i.y))
@@ -408,20 +415,23 @@ def level2():
             elif snow.x < 0 or snow.x > GAME_WIDTH:
                 snow_list.remove(snow)
         if game_status == 'WIN':
+            ticks = 0
             snowmans = [Enemy(980, 500, 1, 16), Enemy(1400, 100, -1, 16), Enemy(2500, 235, -1, 16),
                         Enemy(3500, 235, -1, 16), Enemy(5504, 500, -1, 16), Enemy(5504, 500, -1, 16),
                         Enemy(384, -35, 1, 16), Enemy(7100, 365, -1, 16)]
-            win_game()
+            win_game(out)
         if player.ydisplacement > 1000:
             running, game_status = player.game_over(running, 1)
         if game_status == 'GAME OVER':
+            ticks = 0
             snowmans = [Enemy(980, 500, 1, 16), Enemy(1400, 100, -1, 16), Enemy(2500, 235, -1, 16),
                         Enemy(3500, 235, -1, 16), Enemy(5504, 500, -1, 16), Enemy(5504, 500, -1, 16),
                         Enemy(384, -35, 1, 16), Enemy(7100, 365, -1, 16)]
-            end_game()
+            end_game(out)
         pygame.display.update()
         pygame.display.flip()
         clock.tick(60)
+        ticks += 38
     pygame.quit()
     sys.exit()
 
@@ -459,7 +469,6 @@ def show_menu():
         pygame.display.update()
         clock.tick(60)
 
-
 def start_game():
     pygame.mixer.music.load('fonmusic.mp3')
     pygame.mixer.music.play(loops=-1)
@@ -484,13 +493,13 @@ def start_game():
     snowmans = [Enemy(980, 500, 1, 10), Enemy(1400, 100, -1, 10), Enemy(2500, 235, -1, 10),
                 Enemy(3500, 235, -1, 10), Enemy(5504, 500, -1, 10), Enemy(5504, 500, -1, 10)]
     game_status = ''
+    ticks = 0
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 player.attack()
-        screen.fill(WHITE)
         all_sprites = player.move(all_sprites, snowmans)
         screen.blit(background_image, (0, 0))
         all_sprites.draw(screen)
@@ -498,6 +507,10 @@ def start_game():
         screen, snowmans = player.render(screen, snowmans)
         running, game_status = player.game_over(running, 0)
         running, game_status = player.win(running, 0)
+        seconds = int(ticks / 1000 % 60)
+        minutes = int(ticks / 60000 % 24)
+        out = 'TIME {minutes:02d}:{seconds:02d}'.format(minutes=minutes, seconds=seconds)
+        print_text(f'{out}', 0, 0, font_size=50)
         for i in snowmans:
             i.move()
             screen.blit(i.get_current_image(), (i.x, i.y))
@@ -521,16 +534,18 @@ def start_game():
         if game_status == 'WIN':
             snowmans = [Enemy(980, 500, 1, 10), Enemy(1400, 100, -1, 10), Enemy(2500, 235, -1, 10),
                         Enemy(3500, 235, -1, 10), Enemy(5504, 500, -1, 10), Enemy(5504, 500, -1, 10)]
-            win_game()
+            win_game(out)
         if player.ydisplacement > 1000:
             running, game_status = player.game_over(running, 1)
         if game_status == 'GAME OVER':
+            ticks = 0
             snowmans = [Enemy(980, 500, 1, 10), Enemy(1400, 100, -1, 10), Enemy(2500, 235, -1, 10),
                         Enemy(3500, 235, -1, 10), Enemy(5504, 500, -1, 10), Enemy(5504, 500, -1, 10)]
-            end_game()
+            end_game(out)
         pygame.display.update()
         pygame.display.flip()
         clock.tick(60)
+        ticks += 38
     pygame.quit()
     sys.exit()
 
@@ -559,7 +574,7 @@ class Button:
         print_text(message=message, x=x + 10, y=y + 10, font_size=font_size)
 
 
-def print_text(message, x, y, font_color=(0, 0, 0), font_type='PingPong.ttf', font_size=30):
+def print_text(message, x, y, font_color=(255, 255, 255), font_type='PingPong.ttf', font_size=30):
     font_type = pygame.font.Font(font_type, font_size)
     text = font_type.render(message, True, font_color)
     start_menu_screen.blit(text, (x, y))
